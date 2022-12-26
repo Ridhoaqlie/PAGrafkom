@@ -160,8 +160,8 @@ void Demo::Init() {
 	// build and compile our shader program
 	// ------------------------------------
 	shaderProgram = BuildShader("vertexShader.vert", "fragmentShader.frag", nullptr);
-	shaderLamp = BuildShader("lampShader.vert", "fragmentLamp.frag", nullptr);
-	
+	blendingProgram = BuildShader("vertexShader.vert", "fragmentLamp.frag", nullptr);
+
 	BuildColoredKaca();
 	BuildColoredCube();
 	BuildColoredPlane();
@@ -186,9 +186,14 @@ void Demo::DeInit() {
 	glDeleteBuffers(1, &VBO2);
 	glDeleteBuffers(1, &EBO2);
 
-	glDeleteVertexArrays(1, &VAO5);
-	glDeleteBuffers(1, &VBO5);
-	glDeleteBuffers(1, &EBO5);
+	glDeleteVertexArrays(1, &VAO3);
+	glDeleteBuffers(1, &VBO3);
+	glDeleteBuffers(1, &EBO3);
+
+	glDeleteVertexArrays(1, &VAO4);
+	glDeleteBuffers(1, &VBO4);
+	glDeleteBuffers(1, &EBO4);
+
 }
 
 void Demo::Update(double deltaTime) {
@@ -219,19 +224,53 @@ void Demo::Render() {
 	GLint viewLoc = glGetUniformLocation(this->shaderProgram, "view");
 	glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
 	
-	GLint projLoc2 = glGetUniformLocation(this->shaderLamp, "projection");
-	glUniformMatrix4fv(projLoc2, 1, GL_FALSE, glm::value_ptr(projection));
 
-	GLint viewLoc2 = glGetUniformLocation(this->shaderLamp, "view");
-	glUniformMatrix4fv(viewLoc2, 1, GL_FALSE, glm::value_ptr(view));
+	// set lighting attributes, camera(position, target / direction, up)
+	glm::vec3 cameraPos = glm::vec3(17, 3, -29);
+	glm::vec3 cameraFront = glm::vec3(-1, -1, 1);
+	GLint viewPosLoc = glGetUniformLocation(this->shaderProgram, "viewPos");
+	glUniform3f(viewPosLoc, 0, 3, 3);
+	
+	//directLight
+	glUniform3f(glGetUniformLocation(this->shaderProgram, "dirLight.direction"), 0.0f, -1.0f, 0.0f);
+	glUniform3f(glGetUniformLocation(this->shaderProgram, "dirLight.ambient"), 0.9f, 0.9f, 1.0f);
+	glUniform3f(glGetUniformLocation(this->shaderProgram, "dirLight.diffuse"), 1.0f, 0.0f, 0.0f);
+	glUniform3f(glGetUniformLocation(this->shaderProgram, "dirLight.specular"), 0.0f, 0.0f, 0.0f);
 
-	// set lighting attributes
-	GLint lightPosLoc = glGetUniformLocation(this->shaderLamp, "lightPos");
-	glUniform3f(lightPosLoc, 0, 1, 0);
-	GLint viewPosLoc = glGetUniformLocation(this->shaderLamp, "viewPos");
-	glUniform3f(viewPosLoc, 0, 2, 3);
-	GLint lightColorLoc = glGetUniformLocation(this->shaderLamp, "lightColor");
-	glUniform3f(lightColorLoc, 1.0f, 1.0f, 1.0f);
+	// point light 1
+	glUniform3f(glGetUniformLocation(this->shaderProgram, "pointLights[0].position"), -30.0f, 1.0f, 10.0f);
+	glUniform3f(glGetUniformLocation(this->shaderProgram, "pointLights[0].ambient"), 1.0f, 1.0f, 0.9f);
+	glUniform3f(glGetUniformLocation(this->shaderProgram, "pointLights[0].diffuse"), 1.0f, 0.0f, 0.0f);
+	glUniform3f(glGetUniformLocation(this->shaderProgram, "pointLights[0].specular"), 1.0f, 0.0f, 0.0f);
+	glUniform1f(glGetUniformLocation(this->shaderProgram, "pointLights[0].constant"), 1.0f);
+	glUniform1f(glGetUniformLocation(this->shaderProgram, "pointLights[0].linear"), 0.09f);
+	glUniform1f(glGetUniformLocation(this->shaderProgram, "pointLights[0].quadratic"), 0.032f);
+	
+	// point light 2
+	glUniform3f(glGetUniformLocation(this->shaderProgram, "pointLights[1].position"), -26.0f, 5.0f, -25.0f);
+	glUniform3f(glGetUniformLocation(this->shaderProgram, "pointLights[1].ambient"), 0.0f, 1.0f, 0.0f);
+	glUniform3f(glGetUniformLocation(this->shaderProgram, "pointLights[1].diffuse"), 0.0f, 1.0f, 0.0f);
+	glUniform3f(glGetUniformLocation(this->shaderProgram, "pointLights[1].specular"), 0.0f, 1.0f, 0.0f);
+	glUniform1f(glGetUniformLocation(this->shaderProgram, "pointLights[1].constant"), 1.0f);
+	glUniform1f(glGetUniformLocation(this->shaderProgram, "pointLights[1].linear"), 0.09f);
+	glUniform1f(glGetUniformLocation(this->shaderProgram, "pointLights[1].quadratic"), 0.032f);
+	
+
+
+	// spotLight
+	glUniform3fv(glGetUniformLocation(this->shaderProgram, "spotLight.position"), 1, &cameraPos[0]);
+	glUniform3fv(glGetUniformLocation(this->shaderProgram, "spotLight.direction"), 1, &cameraFront[0]);
+	glUniform3f(glGetUniformLocation(this->shaderProgram, "spotLight.ambient"), 1.0f, 0.0f, 1.0f);
+	glUniform3f(glGetUniformLocation(this->shaderProgram, "spotLight.diffuse"), 1.0f, 0.0f, 1.0f);
+	glUniform3f(glGetUniformLocation(this->shaderProgram, "spotLight.specular"), 1.0f, 1.0f, 1.0f);
+	glUniform1f(glGetUniformLocation(this->shaderProgram, "spotLight.constant"), 1.0f);
+	glUniform1f(glGetUniformLocation(this->shaderProgram, "spotLight.linear"), 0.09f);
+	glUniform1f(glGetUniformLocation(this->shaderProgram, "spotLight.quadratic"), 0.032f);
+	glUniform1f(glGetUniformLocation(this->shaderProgram, "spotLight.cutOff"), glm::cos(glm::radians(25.5f)));
+	glUniform1f(glGetUniformLocation(this->shaderProgram, "spotLight.outerCutOff"), glm::cos(glm::radians(27.0f)));
+	
+	
+
 	
 	DrawColoredPlane();
 	DrawColoredCubeBuilding();
@@ -249,8 +288,8 @@ void Demo::Render() {
 
 
 void Demo::BuildColoredKaca() {
-	glGenTextures(1, &texture9);
-	glBindTexture(GL_TEXTURE_2D, texture9);
+	glGenTextures(1, &GlassTexture);
+	glBindTexture(GL_TEXTURE_2D, GlassTexture);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	int width, height;
@@ -260,21 +299,23 @@ void Demo::BuildColoredKaca() {
 	glBindTexture(GL_TEXTURE_2D, 0);
 
 
-	glGenVertexArrays(1, &VAO);
-	glGenBuffers(1, &VBO);
-	glGenBuffers(1, &EBO);
+	glGenVertexArrays(1, &VAO2);
+	glGenBuffers(1, &VBO2);
+	glGenBuffers(1, &EBO2);
 	// bind the Vertex Array Object first, then bind and set vertex buffer(s), and then configure vertex attributes(s).
-	glBindVertexArray(VAO);
+	glBindVertexArray(VAO2);
 
-	glBindBuffer(GL_ARRAY_BUFFER, VBO);
+	glBindBuffer(GL_ARRAY_BUFFER, VBO2);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
 
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO2);
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
 
+	// define position pointer layout 0
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(GLfloat), (GLvoid*)(0 * sizeof(GLfloat)));
 	glEnableVertexAttribArray(0);
 
+	// define texcoord pointer layout 1
 	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(GLfloat), (GLvoid*)(3 * sizeof(GLfloat)));
 	glEnableVertexAttribArray(1);
 
@@ -285,8 +326,8 @@ void Demo::BuildColoredKaca() {
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 }
 void Demo::BuildColoredMenara() {
-	glGenTextures(1, &texture6);
-	glBindTexture(GL_TEXTURE_2D, texture6);
+	glGenTextures(1, &MenaraTexture);
+	glBindTexture(GL_TEXTURE_2D, MenaraTexture);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	int width, height;
@@ -296,16 +337,16 @@ void Demo::BuildColoredMenara() {
 	glBindTexture(GL_TEXTURE_2D, 0);
 
 
-	glGenVertexArrays(1, &VAO);
-	glGenBuffers(1, &VBO);
-	glGenBuffers(1, &EBO);
+	glGenVertexArrays(1, &VAO2);
+	glGenBuffers(1, &VBO2);
+	glGenBuffers(1, &EBO2);
 	// bind the Vertex Array Object first, then bind and set vertex buffer(s), and then configure vertex attributes(s).
-	glBindVertexArray(VAO);
+	glBindVertexArray(VAO2);
 
-	glBindBuffer(GL_ARRAY_BUFFER, VBO);
+	glBindBuffer(GL_ARRAY_BUFFER, VBO2);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
 
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO2);
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
 
 	// define position pointer layout 0
@@ -330,31 +371,39 @@ void Demo::BuildColoredCube() {
 	// load image into texture memory
 	// ------------------------------
 	// Load and create a texture 
-	glGenTextures(1, &texture);
-	glBindTexture(GL_TEXTURE_2D, texture);
+	glGenTextures(1, &Planetexture);
+	glBindTexture(GL_TEXTURE_2D, Planetexture);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	int width, height;
-	unsigned char* image = SOIL_load_image("pesawat2.png", &width, &height, 0, SOIL_LOAD_RGBA);
+	unsigned char* image = SOIL_load_image("pesawat.png", &width, &height, 0, SOIL_LOAD_RGBA);
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, image);
 	SOIL_free_image_data(image);
 	glBindTexture(GL_TEXTURE_2D, 0);
 
+	glGenTextures(1, &Planetexture_1);
+	glBindTexture(GL_TEXTURE_2D, Planetexture_1);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	image = SOIL_load_image("pesawat_1.png", &width, &height, 0, SOIL_LOAD_RGBA);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, image);
+	SOIL_free_image_data(image);
+	glBindTexture(GL_TEXTURE_2D, 0);
 	// set up vertex data (and buffer(s)) and configure vertex attributes
 	// ------------------------------------------------------------------
 
 
 
-	glGenVertexArrays(1, &VAO);
-	glGenBuffers(1, &VBO);
-	glGenBuffers(1, &EBO);
+	glGenVertexArrays(1, &VAO2);
+	glGenBuffers(1, &VBO2);
+	glGenBuffers(1, &EBO2);
 	// bind the Vertex Array Object first, then bind and set vertex buffer(s), and then configure vertex attributes(s).
-	glBindVertexArray(VAO);
+	glBindVertexArray(VAO2);
 
-	glBindBuffer(GL_ARRAY_BUFFER, VBO);
+	glBindBuffer(GL_ARRAY_BUFFER, VBO2);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
 
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO2);
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
 
 	// define position pointer layout 0
@@ -378,58 +427,59 @@ void Demo::BuildColoredCube() {
 }
 void Demo::BuildColoredPlane()
 {
+
+
 	// Load and create a texture 
-	glGenTextures(1, &texture2);
-	glBindTexture(GL_TEXTURE_2D, texture2);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glGenTextures(1, &Floortexture);
+	glBindTexture(GL_TEXTURE_2D, Floortexture);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
 	int width, height;
 	unsigned char* image = SOIL_load_image("runaway.png", &width, &height, 0, SOIL_LOAD_RGBA);
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, image);
-	//glGenerateMipmap(GL_TEXTURE_2D);
+	glGenerateMipmap(GL_TEXTURE_2D);
 	SOIL_free_image_data(image);
 	glBindTexture(GL_TEXTURE_2D, 0);
 
-	//Build geometry
-	GLfloat vertices[] = {
-		// format position, tex coords
-		// bottom
-		-1, -1, -1,  0,  0,
-		 1, -1, -1, 1,  0,
-		 1, -1,  1, 1, 1,
-		-1, -1,  1,  0, 1,
-	};
+	glGenTextures(1, &Floortexture_1);
+	glBindTexture(GL_TEXTURE_2D, Floortexture_1);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	image = SOIL_load_image("ForAll.png", &width, &height, 0, SOIL_LOAD_RGBA);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, image);
+	SOIL_free_image_data(image);
+	glBindTexture(GL_TEXTURE_2D, 0);
 
-	GLuint indices[] = { 0,  2,  1,  0,  3,  2 };
+	glGenVertexArrays(1, &VAO);
+	glGenBuffers(1, &VAO);
+	glGenBuffers(1, &VAO);
 
-	glGenVertexArrays(1, &VAO2);
-	glGenBuffers(1, &VBO2);
-	glGenBuffers(1, &EBO2);
+	glBindVertexArray(VAO);
 
-	glBindVertexArray(VAO2);
-
-	glBindBuffer(GL_ARRAY_BUFFER, VBO2);
+	glBindBuffer(GL_ARRAY_BUFFER, VAO);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
 
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO2);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, VAO);
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
 
 	// Position attribute
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(GLfloat), 0);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(GLfloat), 0);
 	glEnableVertexAttribArray(0);
 	// TexCoord attribute
-	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(GLfloat), (GLvoid*)(3 * sizeof(GLfloat)));
+	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(GLfloat), (GLvoid*)(3 * sizeof(GLfloat)));
 	glEnableVertexAttribArray(1);
+	// Normal attribute
+	glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(GLfloat), (GLvoid*)(5 * sizeof(GLfloat)));
+	glEnableVertexAttribArray(2);
 
 	glBindVertexArray(0); // Unbind VAO
 }
 void Demo::BuildColoredbuilding() {
-	// load image into texture memory
-	// ------------------------------
-	// Load and create a texture 
-	glGenTextures(1, &texture3);
-	glBindTexture(GL_TEXTURE_2D, texture3);
+	glGenTextures(1, &BuildTexture);
+	glBindTexture(GL_TEXTURE_2D, BuildTexture);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	int width, height;
@@ -438,21 +488,17 @@ void Demo::BuildColoredbuilding() {
 	SOIL_free_image_data(image);
 	glBindTexture(GL_TEXTURE_2D, 0);
 
-	// set up vertex data (and buffer(s)) and configure vertex attributes
-	// ------------------------------------------------------------------
-
-
-
-	glGenVertexArrays(1, &VAO);
-	glGenBuffers(1, &VBO);
-	glGenBuffers(1, &EBO);
+	
+	glGenVertexArrays(1, &VAO2);
+	glGenBuffers(1, &VBO2);
+	glGenBuffers(1, &EBO2);
 	// bind the Vertex Array Object first, then bind and set vertex buffer(s), and then configure vertex attributes(s).
-	glBindVertexArray(VAO);
+	glBindVertexArray(VAO2);
 
-	glBindBuffer(GL_ARRAY_BUFFER, VBO);
+	glBindBuffer(GL_ARRAY_BUFFER, VBO2);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
 
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO2);
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
 
 	// define position pointer layout 0
@@ -463,57 +509,70 @@ void Demo::BuildColoredbuilding() {
 	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(GLfloat), (GLvoid*)(3 * sizeof(GLfloat)));
 	glEnableVertexAttribArray(1);
 
-	// note that this is allowed, the call to glVertexAttribPointer registered VBO as the vertex attribute's bound vertex buffer object so afterwards we can safely unbind
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 
-	// You can unbind the VAO afterwards so other VAO calls won't accidentally modify this VAO, but this rarely happens. Modifying other
-	// VAOs requires a call to glBindVertexArray anyways so we generally don't unbind VAOs (nor VBOs) when it's not directly necessary.
 	glBindVertexArray(0);
 
-	// remember: do NOT unbind the EBO while a VAO is active as the bound element buffer object IS stored in the VAO; keep the EBO bound.
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 
 }
 void Demo::BuildColoredLamp() {
 	
-	glGenVertexArrays(1, &VAO5);
-	glGenBuffers(1, &VBO5);
-	glGenBuffers(1, &EBO5);
-	// bind the Vertex Array Object first, then bind and set vertex buffer(s), and then configure vertex attributes(s).
-	glBindVertexArray(VAO5);
+	glGenTextures(1, &LampTexture);
+	glBindTexture(GL_TEXTURE_2D, LampTexture);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	int width, height;
+	unsigned char* image = SOIL_load_image("lamp.png", &width, &height, 0, SOIL_LOAD_RGBA);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, image);
+	SOIL_free_image_data(image);
+	glBindTexture(GL_TEXTURE_2D, 0);
 
-	glBindBuffer(GL_ARRAY_BUFFER, VBO5);
+	glGenTextures(1, &LampTexture_1);
+	glBindTexture(GL_TEXTURE_2D, LampTexture_1);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	image = SOIL_load_image("ForAll.png", &width, &height, 0, SOIL_LOAD_RGBA);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, image);
+	SOIL_free_image_data(image);
+	glBindTexture(GL_TEXTURE_2D, 0);
+	// set up vertex data (and buffer(s)) and configure vertex attributes
+	// ------------------------------------------------------------------
+
+
+
+	glGenVertexArrays(1, &VAO2);
+	glGenBuffers(1, &VBO2);
+	glGenBuffers(1, &EBO2);
+	// bind the Vertex Array Object first, then bind and set vertex buffer(s), and then configure vertex attributes(s).
+	glBindVertexArray(VAO2);
+
+	glBindBuffer(GL_ARRAY_BUFFER, VBO2);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
 
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO5);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO2);
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
 
-	// define position pointer layout 0
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(GLfloat), (GLvoid*)(0 * sizeof(GLfloat)));
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(GLfloat), (GLvoid*)(0 * sizeof(GLfloat)));
 	glEnableVertexAttribArray(0);
 
-	// define normal pointer layout 2
-	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(GLfloat), (GLvoid*)(3 * sizeof(GLfloat)));
+	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(GLfloat), (GLvoid*)(3 * sizeof(GLfloat)));
 	glEnableVertexAttribArray(1);
 
-	// note that this is allowed, the call to glVertexAttribPointer registered VBO as the vertex attribute's bound vertex buffer object so afterwards we can safely unbind
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 
-	// You can unbind the VAO afterwards so other VAO calls won't accidentally modify this VAO, but this rarely happens. Modifying other
-	// VAOs requires a call to glBindVertexArray anyways so we generally don't unbind VAOs (nor VBOs) when it's not directly necessary.
 	glBindVertexArray(0);
 
-	// remember: do NOT unbind the EBO while a VAO is active as the bound element buffer object IS stored in the VAO; keep the EBO bound.
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 
 }
 void Demo::BuildColoredCar() {
-	glGenTextures(1, &texture5);
-	glBindTexture(GL_TEXTURE_2D, texture5);
+	glGenTextures(1, &CarTexture);
+	glBindTexture(GL_TEXTURE_2D, CarTexture);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	int width, height;
-	unsigned char* image = SOIL_load_image("car21.png", &width, &height, 0, SOIL_LOAD_RGBA);
+	unsigned char* image = SOIL_load_image("car.png", &width, &height, 0, SOIL_LOAD_RGBA);
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, image);
 	SOIL_free_image_data(image);
 	glBindTexture(GL_TEXTURE_2D, 0);
@@ -551,8 +610,8 @@ void Demo::BuildColoredCar() {
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 }
 void Demo::BuildColoredCubeBack() {
-	glGenTextures(1, &texture7);
-	glBindTexture(GL_TEXTURE_2D, texture7);
+	glGenTextures(1, &Planetexture2);
+	glBindTexture(GL_TEXTURE_2D, Planetexture2);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	int width, height;
@@ -572,7 +631,7 @@ void Demo::BuildColoredCubeBack() {
 	glBindBuffer(GL_ARRAY_BUFFER, VBO4);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices3), vertices3, GL_STATIC_DRAW);
 
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO4);
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices3), indices3, GL_STATIC_DRAW);
 
 	// define position pointer layout 0
@@ -601,9 +660,9 @@ void Demo::DrawCar() {
 	for (int i = 0; i <= 8; i += 4) {
 		glUseProgram(shaderProgram);
 
-		glActiveTexture(GL_TEXTURE0);
-		glBindTexture(GL_TEXTURE_2D, texture5);
-		glUniform1i(glGetUniformLocation(this->shaderProgram, "ourTexture"), 0);
+		glActiveTexture(GL_TEXTURE8);
+		glBindTexture(GL_TEXTURE_2D, CarTexture);
+		glUniform1i(glGetUniformLocation(this->shaderProgram, "material.diffuse"), 8);
 
 		glBindVertexArray(VAO3); // seeing as we only have a single VAO there's no need to bind it every time, but we'll do so to keep things a bit more organized
 
@@ -630,17 +689,24 @@ void Demo::DrawCar() {
 //tanah
 void Demo::DrawColoredPlane()
 {
-	glUseProgram(shaderProgram);
+	UseShader(this->shaderProgram);
+
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, Floortexture);
+	glUniform1i(glGetUniformLocation(this->shaderProgram, "material.diffuse"), 0);
 
 	glActiveTexture(GL_TEXTURE1);
-	glBindTexture(GL_TEXTURE_2D, texture2);
-	glUniform1i(glGetUniformLocation(this->shaderProgram, "ourTexture"), 1);
+	glBindTexture(GL_TEXTURE_2D, Floortexture_1);
+	glUniform1i(glGetUniformLocation(this->shaderProgram, "material.specular"), 1);
 
-	glBindVertexArray(VAO2); // seeing as we only have a single VAO there's no need to bind it every time, but we'll do so to keep things a bit more organized
+	GLint shininessMatLoc = glGetUniformLocation(this->shaderProgram, "material.shininess");
+	glUniform1f(shininessMatLoc, 0.4f);
+
+	glBindVertexArray(VAO); // seeing as we only have a single VAO there's no need to bind it every time, but we'll do so to keep things a bit more organized
 
 	glm::mat4 model;
-
-	model = glm::scale(model, glm::vec3(50, 0, 50));
+	model = glm::translate(model, glm::vec3(0, 0, -15));
+	model = glm::scale(model, glm::vec3(100, 0, 140));
 
 	GLint modelLoc = glGetUniformLocation(this->shaderProgram, "model");
 	glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
@@ -649,6 +715,8 @@ void Demo::DrawColoredPlane()
 
 	glBindTexture(GL_TEXTURE_2D, 0);
 	glBindVertexArray(0);
+
+
 }
 
 
@@ -666,11 +734,18 @@ void Demo::DrawColoredCube(int x, int z)
 {
 	glUseProgram(shaderProgram);
 
-	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, texture);
-	glUniform1i(glGetUniformLocation(this->shaderProgram, "ourTexture"), 0);
+	glActiveTexture(GL_TEXTURE2);
+	glBindTexture(GL_TEXTURE_2D, Planetexture);
+	glUniform1i(glGetUniformLocation(this->shaderProgram, "material.diffuse"), 2);
 
-	glBindVertexArray(VAO); // seeing as we only have a single VAO there's no need to bind it every time, but we'll do so to keep things a bit more organized
+	glActiveTexture(GL_TEXTURE3);
+	glBindTexture(GL_TEXTURE_2D, Planetexture_1);
+	glUniform1i(glGetUniformLocation(this->shaderProgram, "material.specular"), 3);
+
+	GLint shininessMatLoc = glGetUniformLocation(this->shaderProgram, "material.shininess");
+	glUniform1f(shininessMatLoc, 0.4f);
+
+	glBindVertexArray(VAO2); // seeing as we only have a single VAO there's no need to bind it every time, but we'll do so to keep things a bit more organized
 
 
 	glm::mat4 model;
@@ -702,11 +777,11 @@ void Demo::DrawColoredCubeHead(int x, int z)
 {
 	glUseProgram(shaderProgram);
 
-	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, texture);
-	glUniform1i(glGetUniformLocation(this->shaderProgram, "ourTexture"), 0);
+	glActiveTexture(GL_TEXTURE4);
+	glBindTexture(GL_TEXTURE_2D, Planetexture);
+	glUniform1i(glGetUniformLocation(this->shaderProgram, "material.diffuse"), 4);
 
-	glBindVertexArray(VAO); // seeing as we only have a single VAO there's no need to bind it every time, but we'll do so to keep things a bit more organized
+	glBindVertexArray(VAO2); // seeing as we only have a single VAO there's no need to bind it every time, but we'll do so to keep things a bit more organized
 
 
 
@@ -736,11 +811,11 @@ void Demo::DrawColoredCubeWing1(int x, int z)
 {
 	glUseProgram(shaderProgram);
 
-	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, texture);
-	glUniform1i(glGetUniformLocation(this->shaderProgram, "ourTexture"), 0);
+	glActiveTexture(GL_TEXTURE5);
+	glBindTexture(GL_TEXTURE_2D, Planetexture);
+	glUniform1i(glGetUniformLocation(this->shaderProgram, "material.diffuse"), 5);
 
-	glBindVertexArray(VAO); // seeing as we only have a single VAO there's no need to bind it every time, but we'll do so to keep things a bit more organized
+	glBindVertexArray(VAO2); // seeing as we only have a single VAO there's no need to bind it every time, but we'll do so to keep things a bit more organized
 
 
 
@@ -770,11 +845,11 @@ void Demo::DrawColoredCubeWing2(int x, int z)
 {
 	glUseProgram(shaderProgram);
 
-	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, texture);
-	glUniform1i(glGetUniformLocation(this->shaderProgram, "ourTexture"), 0);
+	glActiveTexture(GL_TEXTURE6);
+	glBindTexture(GL_TEXTURE_2D, Planetexture);
+	glUniform1i(glGetUniformLocation(this->shaderProgram, "material.diffuse"), 6);
 
-	glBindVertexArray(VAO); // seeing as we only have a single VAO there's no need to bind it every time, but we'll do so to keep things a bit more organized
+	glBindVertexArray(VAO2); // seeing as we only have a single VAO there's no need to bind it every time, but we'll do so to keep things a bit more organized
 
 
 
@@ -805,9 +880,9 @@ void Demo::DrawColoredCubeBack(int x, int z)
 
 		glUseProgram(shaderProgram);
 
-		glActiveTexture(GL_TEXTURE0);
-		glBindTexture(GL_TEXTURE_2D, texture7);
-		glUniform1i(glGetUniformLocation(this->shaderProgram, "ourTexture"), 0);
+		glActiveTexture(GL_TEXTURE7);
+		glBindTexture(GL_TEXTURE_2D, Planetexture);
+		glUniform1i(glGetUniformLocation(this->shaderProgram, "material.diffuse"), 7);
 
 		glBindVertexArray(VAO4); // seeing as we only have a single VAO there's no need to bind it every time, but we'll do so to keep things a bit more organized
 
@@ -839,11 +914,11 @@ void Demo::DrawColoredCubeBackWing(int x, int z)
 
 		glUseProgram(shaderProgram);
 
-		glActiveTexture(GL_TEXTURE0);
-		glBindTexture(GL_TEXTURE_2D, texture);
-		glUniform1i(glGetUniformLocation(this->shaderProgram, "ourTexture"), 0);
+		glActiveTexture(GL_TEXTURE8);
+		glBindTexture(GL_TEXTURE_2D, Planetexture);
+		glUniform1i(glGetUniformLocation(this->shaderProgram, "material.diffuse"), 8);
 
-		glBindVertexArray(VAO); // seeing as we only have a single VAO there's no need to bind it every time, but we'll do so to keep things a bit more organized
+		glBindVertexArray(VAO2); // seeing as we only have a single VAO there's no need to bind it every time, but we'll do so to keep things a bit more organized
 
 
 
@@ -876,11 +951,11 @@ void Demo::DrawColoredCubeBuilding()
 
 	glUseProgram(shaderProgram);
 
-	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, texture3);
-	glUniform1i(glGetUniformLocation(this->shaderProgram, "ourTexture"), 0);
+	glActiveTexture(GL_TEXTURE9);
+	glBindTexture(GL_TEXTURE_2D, BuildTexture);
+	glUniform1i(glGetUniformLocation(this->shaderProgram, "material.diffuse"), 9);
 
-	glBindVertexArray(VAO); // seeing as we only have a single VAO there's no need to bind it every time, but we'll do so to keep things a bit more organized
+	glBindVertexArray(VAO2); // seeing as we only have a single VAO there's no need to bind it every time, but we'll do so to keep things a bit more organized
 
 
 
@@ -904,29 +979,20 @@ void Demo::DrawLamp() {
 	
 	for (int i = -15; i <= 15;) {
 		for (int z = 0; z <= 16; z += 16) {
-			UseShader(shaderLamp);
+			UseShader(shaderProgram);
 
-			glActiveTexture(GL_TEXTURE0);
-			glBindTexture(GL_TEXTURE_2D, texture4);
-			glUniform1i(glGetUniformLocation(this->shaderProgram, "ourTexture"), 0);
-			glBindVertexArray(VAO5); // seeing as we only have a single VAO there's no need to bind it every time, but we'll do so to keep things a bit more organized
+			glActiveTexture(GL_TEXTURE10);
+			glBindTexture(GL_TEXTURE_2D, LampTexture);
+			glUniform1i(glGetUniformLocation(this->shaderProgram, "material.diffuse"), 10);
+			glBindVertexArray(VAO2); // seeing as we only have a single VAO there's no need to bind it every time, but we'll do so to keep things a bit more organized
 
-			// set lighting materials attributes (Emerald)
-			GLint ambientMatLoc = glGetUniformLocation(this->shaderLamp, "material.ambient");
-			glUniform3f(ambientMatLoc, 0.0215f, 0.1745f, 0.0215f);
-			GLint diffuseMatLoc = glGetUniformLocation(this->shaderLamp, "material.diffuse");
-			glUniform3f(diffuseMatLoc, 0.07568f, 0.61424f, 0.07568f);
-			GLint specularMatLoc = glGetUniformLocation(this->shaderLamp, "material.specular");
-			glUniform3f(specularMatLoc, 0.633f, 0.727811f, 0.633f);
-			GLint shininessMatLoc = glGetUniformLocation(this->shaderLamp, "material.shininess");
-			glUniform1f(shininessMatLoc, 0.6f);
+			
 
 			glm::mat4 model;
-			model = glm::translate(model, glm::vec3(0, 0, 0));
-			//model = glm::translate(model, glm::vec3(3 * i, 0, 1.8 + z));
-			//model = glm::scale(model, glm::vec3(0.4, 0.7, 0.4));
+			model = glm::translate(model, glm::vec3(3 * i, 0, 1.8 + z));
+			model = glm::scale(model, glm::vec3(0.4, 0.7, 0.4));
 
-			GLint modelLoc = glGetUniformLocation(this->shaderLamp, "model");
+			GLint modelLoc = glGetUniformLocation(this->shaderProgram, "model");
 			glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
 
 			glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
@@ -947,11 +1013,11 @@ void Demo::DrawLamp() {
 void Demo::DrawMenara() {
 	glUseProgram(shaderProgram);
 
-	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, texture6);
-	glUniform1i(glGetUniformLocation(this->shaderProgram, "ourTexture"), 0);
+	glActiveTexture(GL_TEXTURE11);
+	glBindTexture(GL_TEXTURE_2D, MenaraTexture);
+	glUniform1i(glGetUniformLocation(this->shaderProgram, "material.diffuse"), 11);
 
-	glBindVertexArray(VAO); // seeing as we only have a single VAO there's no need to bind it every time, but we'll do so to keep things a bit more organized
+	glBindVertexArray(VAO2); // seeing as we only have a single VAO there's no need to bind it every time, but we'll do so to keep things a bit more organized
 
 
 
@@ -974,10 +1040,14 @@ void Demo::DrawKaca() {
 	glUseProgram(shaderProgram);
 
 	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, texture9);
-	glUniform1i(glGetUniformLocation(this->shaderProgram, "ourTexture"), 0);
+	glBindTexture(GL_TEXTURE_2D, GlassTexture);
+	//glUniform1i(glGetUniformLocation(this->shaderProgram, "material.diffuse"), 12);
 
-	glBindVertexArray(VAO); // seeing as we only have a single VAO there's no need to bind it every time, but we'll do so to keep things a bit more organized
+	glUniform1i(glGetUniformLocation(this->shaderProgram, "ourTexture"),0);
+	//glUniform1f(texturer, (glm::vec3(0.0f, 0.0f, 0.0f),0.5f));
+
+
+	glBindVertexArray(VAO2); 
 
 	float rt = 1.4;
 	glm::mat4 model;

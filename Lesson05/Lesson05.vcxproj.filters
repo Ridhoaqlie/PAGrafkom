@@ -57,6 +57,9 @@
     <Image Include="..\Lesson04\marble.png">
       <Filter>Resource Files</Filter>
     </Image>
+    <Image Include="kaca_menara.png">
+      <Filter>Resource Files</Filter>
+    </Image>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="Lesson05.rc">

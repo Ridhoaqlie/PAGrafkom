@@ -13,8 +13,8 @@ public:
 	Demo();
 	~Demo();
 private:
-	GLuint shaderProgram, shaderLamp, VBO, VAO, EBO, texture, VBO2, VAO2, EBO2, texture2, VBO3, VAO3, EBO3, texture3,
-		texture4,texture5, texture6, VBO4, VAO4, EBO4, texture7, VBO5, VAO5, EBO5, texture8, texture9, texture10;
+	GLuint shaderProgram, blendingProgram, VBO, VAO, EBO, Floortexture, Floortexture_1, VBO2, VAO2, EBO2, Planetexture, Planetexture_1, VBO3, VAO3, EBO3, Planetexture2,
+		Planetexture2_1, VBO4, VAO4, EBO4, CarTexture,  CarTexture_1, BuildTexture, BuildTexture_1,  LampTexture, LampTexture_1, GlassTexture, GlassTexture_1, MenaraTexture, MenaraTexture_1;
 	float angle = 3;
 	float scale = 0;
 	float pos = 0;

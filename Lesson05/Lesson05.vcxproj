@@ -142,6 +142,7 @@
   <ItemGroup>
     <Image Include="..\Lesson04\marble.png" />
     <Image Include="crate.png" />
+    <Image Include="kaca_menara.png" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="Lesson05.rc" />
